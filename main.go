@@ -3,12 +3,14 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"net/http"
 	"time"
 )
 
 type URL struct {
-	Id           int       `json:"Id"`
+	Id           string    `json:"Id"`
 	OriginalUrl  string    `json:"OriginalUrl"`
 	ShortUrl     string    `json:"ShortUrl"`
 	CreationDate time.Time `json:"CreationDate"`
@@ -32,8 +34,37 @@ func genrateShortUrl(OriginalUrl string) string {
 
 }
 
+// storing in db
+
+func createURL(OriginalUrl string) string {
+	shortUrl := genrateShortUrl(OriginalUrl)
+	id := shortUrl
+	urlDb[id] = URL{
+		Id:           id,
+		OriginalUrl:  OriginalUrl,
+		ShortUrl:     shortUrl,
+		CreationDate: time.Now(),
+	}
+	return shortUrl
+}
+
+func getURL(id string) (URL, error) {
+	url, ok := urlDb[id]
+	if !ok {
+		return URL{}, errors.New("URL Not found")
+	}
+	return url, nil
+}
+
 func main() {
 	fmt.Println("we are creating url shortener ")
 	OriginalUrl := "https://github.com/palindrome-kasak"
 	genrateShortUrl(OriginalUrl)
+	// setup server , local host
+	// http server start
+	fmt.Println("starting the http server on port 3000")
+	err := http.ListenAndServe(":3000", nil)
+	if err != nil {
+		fmt.Println("Error on starting server:,", err)
+	}
 }
